@@ -1,0 +1,34 @@
+<launch>
+  <arg name="use_sim_time" value="false"/>
+  <arg name="host"/>
+  <arg name="host_2"/>
+  <arg name="receive_port" default="5000"/>
+  <arg name="receive_port_2" default="5001"/>
+  <arg name="width" default="640"/>
+  <arg name="height" default="480"/>
+  <arg name="fps" default="30"/>
+  <arg name="camera" default="camera"/>
+  <arg name="camera_2" default="camera_2"/>
+
+  <include file="$(find neato_node)/launch/bringup_minimal.launch">
+	<arg name="host" value="$(arg host)"/>
+  </include>
+  <include file="$(find cv_project)/launch/Camera/raspi_nodelet_udp_multi.launch">
+	 <arg name="host" value="$(arg host)"/>
+   <arg name="receive_port" value="$(arg receive_port)"/>
+   <arg name="width" value="$(arg width)"/>
+   <arg name="height" value="$(arg height)"/>
+   <arg name="fps" value="$(arg fps)"/>
+   <arg name="camera_name" value="$(arg camera)"/>
+  </include>
+
+  clude file="$(find cv_project)/launch/Camera/raspi_nodelet_udp_multi.launch" ns="camera_2">
+	 <arg name="host" value="$(arg host_2)"/>
+   <arg name="receive_port" value="$(arg receive_port_2)"/>
+   <arg name="width" value="$(arg width)"/>
+   <arg name="height" value="$(arg height)"/>
+   <arg name="fps" value="$(arg fps)"/>
+   <arg name="camera_name" value="$(arg camera_2)"/>
+  </include>
+
+</launch>
