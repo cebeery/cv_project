@@ -22,8 +22,7 @@ def showImgPair(imgPair, pause=True):
 		cv2.destroyWindow('right')
 
 def detectKeypoints(image):
-	# Create SIFT detector
-	detector = cv2.SIFT()
+	detector = cv2.ORB(1000, 1.2)
 	kp, des = detector.detectAndCompute(image, None)
 	return (kp, des)
 
@@ -33,19 +32,13 @@ def detectKeypointPair(imgPair):
 	right_kp, right_des = detectKeypoints(right)
 	return (left_kp, left_des, right_kp, right_des)
 
-def matchKeypoints(keypointPair):
+def matchKeypoints(keypointPair, nMatches=10):
 	_, left_des, _, right_des = keypointPair
 
-	# Init/use brute force matcher,
-	# with K-nearest-neighbors alg used to cluster
-	# key-points into pairs (k=2)
-	bf = cv2.BFMatcher(crossCheck=True)
+	# Get 10 best matches
+	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 	matches = bf.match(left_des, right_des)
-
-	# Apply ratio test
-	# good_matches = [m for (m,n) in matches if m.distance < 0.75*n.distance]
-
-	return matches
+	return sorted(matches, key=lambda val: val.distance)[:nMatches]
 
 def showMatchPair(imgPair, keypointPair, matches, pause=True):
 	left_img, right_img = imgPair
@@ -59,7 +52,6 @@ def showMatchPair(imgPair, keypointPair, matches, pause=True):
 		matches,
 		pause
 	)
-
 
 if __name__ == "__main__":
 	TEST_FILEPATH = "../images/"
