@@ -32,6 +32,21 @@ def detectKeypointPair(imgPair):
 	right_kp, right_des = detectKeypoints(right)
 	return (left_kp, left_des, right_kp, right_des)
 
+def showKeypointPair(imgPair, keypointPair, pause=True):
+	left_img, right_img = imgPair
+	left_kps, _, right_kps, _ = keypointPair
+
+	left_kpImg = cv2.drawKeypoints(left_img, left_kps, None, color=(0, 0, 255))
+	right_kpImg = cv2.drawKeypoints(right_img, right_kps, None, color=(0, 0, 255))
+
+	cv2.imshow('left_kps', left_kpImg)
+	cv2.imshow('right_kps', right_kpImg)
+
+	if pause:
+		cv2.waitKey(0)
+		cv2.destroyWindow('left_kps')
+		cv2.destroyWindow('right_kps')
+
 def matchKeypoints(keypointPair, nMatches=10):
 	_, left_des, _, right_des = keypointPair
 
@@ -55,14 +70,13 @@ def showMatchPair(imgPair, keypointPair, matches, pause=True):
 
 if __name__ == "__main__":
 	TEST_FILEPATH = "../images/"
-	TEST_FILE = "trash_cans"
-
+	TEST_FILE = "backpack"
 
 	imgPair = loadImagePair(TEST_FILE, TEST_FILEPATH)
-
-	# showImgPair(imgPair)
+	showImgPair(imgPair)
 
 	kpPair = detectKeypointPair(imgPair)
-	matches = matchKeypoints(kpPair)
+	showKeypointPair(imgPair, kpPair)
 
+	matches = matchKeypoints(kpPair)
 	showMatchPair(imgPair, kpPair, matches)

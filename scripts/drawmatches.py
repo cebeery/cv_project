@@ -61,13 +61,13 @@ def drawMatches(img1, kp1, img2, kp2, matches, pause=True):
         # radius 4
         # colour blue
         # thickness = 1
-        cv2.circle(out, (int(x1),int(y1)), 4, (255, 0, 0), 1)   
-        cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (255, 0, 0), 1)
+        cv2.circle(out, (int(x1),int(y1)), 4, (0, 0, 255), 1)
+        cv2.circle(out, (int(x2)+cols1,int(y2)), 4, (0, 0, 255), 1)
 
         # Draw a line in between the two points
         # thickness = 1
         # colour blue
-        cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), (255, 0, 0), 1)
+        cv2.line(out, (int(x1),int(y1)), (int(x2)+cols1,int(y2)), (0, 0, 255), 1)
 
 
     # Show the image
