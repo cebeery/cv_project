@@ -1,7 +1,36 @@
 #!/usr/bin/env python
 import cv2
 import os
-import draw_matches
+import draw_matches as dm
+
+def findKeypoints(img_name, path="../images/", visualize=False):
+	imgPair = loadImagePair(TEST_FILE, TEST_FILEPATH)
+
+	if visualize:
+		showImgPair(imgPair)
+
+	kpPair = detectKeypointPair(imgPair)
+
+	if visualize:
+		showKeypointPair(imgPair, kpPair)
+
+	matches = matchKeypointsByQuota(kpPair)
+
+	if visualize:
+		showMatchPair(imgPair, kpPair, matches)
+
+	leftImg, rightImg = imgPair
+	leftKps, leftDes, rightKps, rightDes = kpPair
+
+	return {
+		"rightImg": rightImg,
+		"rightKps": rightKps,
+		"rightDes": rightDes,
+		"leftImg": leftImg,
+		"leftKps": leftKps,
+		"leftDes": leftDes,
+		"matches": matches
+	}
 
 def loadImage(img_name, path="../images/"):
 	return cv2.imread(os.path.join(path, img_name), 0)
@@ -72,7 +101,7 @@ def showMatchPair(imgPair, keypointPair, matches, pause=True):
 	left_img, right_img = imgPair
 	left_kps, _, right_kps, _ = keypointPair
 
-	matchImg = drawmatches.drawMatches(
+	matchImg = dm.drawMatches(
 		left_img,
 		left_kps,
 		right_img,
@@ -85,11 +114,5 @@ if __name__ == "__main__":
 	TEST_FILEPATH = "../images/"
 	TEST_FILE = "backpack"
 
-	imgPair = loadImagePair(TEST_FILE, TEST_FILEPATH)
-	showImgPair(imgPair)
-
-	kpPair = detectKeypointPair(imgPair)
-	showKeypointPair(imgPair, kpPair)
-
-	matches = matchKeypointsByQuota(kpPair)
-	showMatchPair(imgPair, kpPair, matches)
+	kpMatchData = findKeypoints(TEST_FILE, visualize=True)
+	print kpMatchData.keys()
