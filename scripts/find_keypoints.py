@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import cv2
 import os
-import drawmatches
+import draw_matches
 
 def loadImage(img_name, path="../images/"):
 	return cv2.imread(os.path.join(path, img_name), 0)
