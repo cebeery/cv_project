@@ -47,13 +47,26 @@ def showKeypointPair(imgPair, keypointPair, pause=True):
 		cv2.destroyWindow('left_kps')
 		cv2.destroyWindow('right_kps')
 
-def matchKeypoints(keypointPair, nMatches=10):
+def matchKeypointsByRatio(keypointPair, ratio=0.75):
+	"""
+	Picks any matches that have a distance (badness)
+	lower than <ratio>.
+	"""
 	_, left_des, _, right_des = keypointPair
 
-	# Get 10 best matches
+	bf = cv2.BFMatcher()
+	matches = bf.knnMatch(left_des, right_des, k=2)
+	return [m for (m,n) in matches if m.distance < ratio*n.distance]
+
+def matchKeypointsByQuota(keypointPair, quota=10):
+	"""
+	Picks the top <quota> matches between the two images.
+	"""
+	_, left_des, _, right_des = keypointPair
+
 	bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 	matches = bf.match(left_des, right_des)
-	return sorted(matches, key=lambda val: val.distance)[:nMatches]
+	return sorted(matches, key=lambda val: val.distance)[:quota]
 
 def showMatchPair(imgPair, keypointPair, matches, pause=True):
 	left_img, right_img = imgPair
@@ -78,5 +91,5 @@ if __name__ == "__main__":
 	kpPair = detectKeypointPair(imgPair)
 	showKeypointPair(imgPair, kpPair)
 
-	matches = matchKeypoints(kpPair)
+	matches = matchKeypointsByQuota(kpPair)
 	showMatchPair(imgPair, kpPair, matches)
