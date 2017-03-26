@@ -32,4 +32,7 @@
    <arg name="camera_name" value="$(arg camera_left)"/>
   </include>
 
+  <node ns="camera_left/camera" pkg="image_proc" type="image_proc" name="image_proc" />
+  <node ns="camera_right/camera" pkg="image_proc" type="image_proc" name="image_proc" />
+
 </launch>
