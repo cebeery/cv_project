@@ -3,21 +3,21 @@ import cv2
 import os
 import draw_matches as dm
 
-def findKeypoints(img_name, path="../images/", visualize=False):
-	imgPair = loadImagePair(TEST_FILE, TEST_FILEPATH)
+def findKeypoints(imgName, path="../images/", visualize=False, savePath=None):
+	imgPair = loadImagePair(imgName, path)
 
 	if visualize:
-		showImgPair(imgPair)
+		showImgPair(imgPair, savePath=savePath)
 
 	kpPair = detectKeypointPair(imgPair)
 
 	if visualize:
-		showKeypointPair(imgPair, kpPair)
+		showKeypointPair(imgPair, kpPair, savePath=savePath)
 
 	matches = matchKeypointsByQuota(kpPair)
 
 	if visualize:
-		showMatchPair(imgPair, kpPair, matches)
+		showMatchPair(imgPair, kpPair, matches, savePath=savePath)
 
 	leftImg, rightImg = imgPair
 	leftKps, leftDes, rightKps, rightDes = kpPair
@@ -32,15 +32,15 @@ def findKeypoints(img_name, path="../images/", visualize=False):
 		"matches": matches
 	}
 
-def loadImage(img_name, path="../images/"):
-	return cv2.imread(os.path.join(path, img_name), 0)
+def loadImage(imgName, path="../images/"):
+	return cv2.imread(os.path.join(path, imgName), 0)
 
-def loadImagePair(base_name, path="../images/", ext=".png"):
-	left = loadImage(base_name + "_left" + ext, path);
-	right = loadImage(base_name + "_right" + ext, path);
+def loadImagePair(baseName, path="../images/", ext=".png"):
+	left = loadImage(baseName + "_left" + ext, path);
+	right = loadImage(baseName + "_right" + ext, path);
 	return (left, right)
 
-def showImgPair(imgPair, pause=True):
+def showImgPair(imgPair, pause=True, savePath=None):
 	left, right = imgPair
 	cv2.imshow('left', left)
 	cv2.imshow('right', right)
@@ -50,6 +50,10 @@ def showImgPair(imgPair, pause=True):
 		cv2.destroyWindow('left')
 		cv2.destroyWindow('right')
 
+	if savePath:
+		cv2.imwrite(os.path.join(savePath, 'left_img.png'), left)
+		cv2.imwrite(os.path.join(savePath, 'right_img.png'), right)
+
 def detectKeypoints(image):
 	detector = cv2.ORB(1000, 1.2)
 	kp, des = detector.detectAndCompute(image, None)
@@ -57,34 +61,38 @@ def detectKeypoints(image):
 
 def detectKeypointPair(imgPair):
 	left, right = imgPair
-	left_kp, left_des = detectKeypoints(left)
-	right_kp, right_des = detectKeypoints(right)
-	return (left_kp, left_des, right_kp, right_des)
+	leftKp, leftDes = detectKeypoints(left)
+	rightKp, rightDes = detectKeypoints(right)
+	return (leftKp, leftDes, rightKp, rightDes)
 
-def showKeypointPair(imgPair, keypointPair, pause=True):
-	left_img, right_img = imgPair
-	left_kps, _, right_kps, _ = keypointPair
+def showKeypointPair(imgPair, keypointPair, pause=True, savePath=None):
+	leftImg, rightImg = imgPair
+	leftKps, _, rightKps, _ = keypointPair
 
-	left_kpImg = cv2.drawKeypoints(left_img, left_kps, None, color=(0, 0, 255))
-	right_kpImg = cv2.drawKeypoints(right_img, right_kps, None, color=(0, 0, 255))
+	leftKpImg = cv2.drawKeypoints(leftImg, leftKps, None, color=(0, 0, 255))
+	rightKpImg = cv2.drawKeypoints(rightImg, rightKps, None, color=(0, 0, 255))
 
-	cv2.imshow('left_kps', left_kpImg)
-	cv2.imshow('right_kps', right_kpImg)
+	cv2.imshow('left_kps', leftKpImg)
+	cv2.imshow('right_kps', rightKpImg)
 
 	if pause:
 		cv2.waitKey(0)
 		cv2.destroyWindow('left_kps')
 		cv2.destroyWindow('right_kps')
 
+	if savePath:
+		cv2.imwrite(os.path.join(savePath, 'left_kps.png'), leftKpImg)
+		cv2.imwrite(os.path.join(savePath, 'right_kps.png'), rightKpImg)
+
 def matchKeypointsByRatio(keypointPair, ratio=0.75):
 	"""
 	Picks any matches that have a distance (badness)
 	lower than <ratio>.
 	"""
-	_, left_des, _, right_des = keypointPair
+	_, leftDes, _, rightDes = keypointPair
 
 	bf = cv2.BFMatcher()
-	matches = bf.knnMatch(left_des, right_des, k=2)
+	matches = bf.knnMatch(leftDes, rightDes, k=2)
 	return [m for (m,n) in matches if m.distance < ratio*n.distance]
 
 def matchKeypointsByQuota(keypointPair, quota=10):
@@ -97,22 +105,25 @@ def matchKeypointsByQuota(keypointPair, quota=10):
 	matches = bf.match(left_des, right_des)
 	return sorted(matches, key=lambda val: val.distance)[:quota]
 
-def showMatchPair(imgPair, keypointPair, matches, pause=True):
-	left_img, right_img = imgPair
-	left_kps, _, right_kps, _ = keypointPair
+def showMatchPair(imgPair, keypointPair, matches, pause=True, savePath=None):
+	leftImg, rightImg = imgPair
+	leftKps, _, rightKps, _ = keypointPair
 
 	matchImg = dm.drawMatches(
-		left_img,
-		left_kps,
-		right_img,
-		right_kps,
+		leftImg,
+		leftKps,
+		rightImg,
+		rightKps,
 		matches,
 		pause
 	)
+
+	if savePath:
+		cv2.imwrite(os.path.join(savePath, 'matches.png'), matchImg)
 
 if __name__ == "__main__":
 	TEST_FILEPATH = "../images/"
 	TEST_FILE = "backpack"
 
-	kpMatchData = findKeypoints(TEST_FILE, visualize=True)
+	kpMatchData = findKeypoints(TEST_FILE, visualize=True, savePath=('../docs/'+TEST_FILE+'_'))
 	print kpMatchData.keys()
