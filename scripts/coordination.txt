@@ -1,0 +1,34 @@
+INs and OUTs
+
+Structure from Stereo View (master node)
+-Handles library calls via x motion limits
+-Handles ROS topic communication
+
+Libraries:
+
+Find Keypoints
+-Input: stereo camera image paths of same base name
+-Output: keypoints each image and match list + other stuff
+
+Calculate Projection Matrix
+-Input: base image path, camera calibration matrix
+-Calls: Find Key Points (for keypoints each image and match list)
+-Output: projection matrix option
+
+Triangulate
+-Input: ordered list of matching keypoints pairs, projection matrixes, *camera calibration matrix  
+-Output: point cloud in camera frame
+
+Transform Pointcloud
+-Input: odom pose and point cloud in camera frame
+-Output: pointcloud in odom frame
+
+ICP
+-Input: takes odom cummlative point cloud (scene) and new point cloud (view)
+-Output: updated scene point cloud and transform matrix to view to scene
+
+Bundle Adjustment
+??
+
+
+
