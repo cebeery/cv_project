@@ -7,13 +7,12 @@ Structure from Stereo View (master node)
 Libraries:
 
 Find Keypoints
--Input: stereo camera image paths of same base name
+-Input: stereo camera images
 -Output: keypoints each image and match list + other stuff
 
 Calculate Projection Matrix
--Input: base image path, camera calibration matrix
--Calls: Find Key Points (for keypoints each image and match list)
--Output: projection matrix option
+-Input: matched keypoint lists
+-Output: projection matrix options
 
 Triangulate
 -Input: ordered list of matching keypoints pairs, projection matrixes, *camera calibration matrix  
