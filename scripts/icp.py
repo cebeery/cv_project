@@ -1,10 +1,77 @@
+#!/usr/bin/env python
+
 """
-This file imported from Clay Flannigan's Python ICP implementation
+This file modified from Clay Flannigan's Python ICP implementation
 available at: https://github.com/ClayFlannigan/icp.git
 """
 
 import numpy as np
 from scipy.spatial.distance import cdist
+from sklearn.neighbors import NearestNeighbors
+from sensor_msgs.msg import PointCloud
+from geometry_msgs.msg import Point
+
+def augmentScene(view, scene=None, newPtThresh=0.04):
+    """
+    Augments a scene with an approximately correct view (in the same
+    coordinate frame), aligning it precisely, and adding it to the
+    scene - discarding overlaid points.
+    Input:
+      view: a ROS PointCloud
+      scene: a ROS PointCloud
+      newPtThresh: a float dist (m) above which a view point is
+        considered a 'new' point, instead of an existing one
+    Output:
+      scene: a ROS PointCloud
+      transform: a 4x4 transformation matrix used
+        in matching the view to the scene
+    """
+
+    # If no scene is provided, the view is the scene
+    if scene is None:
+        return view, np.identity(4)
+
+    # Unpack ROS PointCloud into standard lists of tuples
+    scene = [(p.x, p.y, p.z) for p in scene.points]
+    view = [(p.x, p.y, p.z) for p in view.points]
+
+    # Construct a tree for efficiently looking up the nearest
+    # neighbor of a point in the view
+    sceneTree = NearestNeighbors(n_neighbors=1)
+    sceneTree.fit(scene)
+
+    # Find the nearest neighbors for all points in the view, but
+    # discard any that are above the newPtThreshold, as they're
+    # sufficiently distant from existing scene points. Record the
+    # remaining matched scene and view points for application of ICP
+    distances, sceneIndex = sceneTree.kneighbors(view)
+    # print "scene index: ", sceneIndex
+    # print distances
+    sceneICPPoints, newICPPoints = ([], [])
+    for i, d in enumerate(distances):
+        if d[0] >= newPtThresh:
+            continue
+
+        sceneICPPoints.append(scene[sceneIndex[i]])
+        newICPPoints.append(view[i])
+
+    # Apply ICP, if there are some matching points with which to align
+    # the view and scene
+    if len(newICPPoints) > 0:
+        T, _ = icp(np.array(newICPPoints), np.array(sceneICPPoints))
+        viewMat = np.ones((4, np.array(view).shape[0]))
+        viewMat[0:3,:] = np.copy(np.array(view).T)
+        transformedView = np.dot(T, viewMat)[0:3,:].T
+
+        distances, _ = sceneTree.kneighbors(transformedView)
+        view = [transformedView[i] for i, d in enumerate(distances) if d >= newPtThresh]
+
+    # Merge transformed view with scene, discarding sufficiently close points
+    scene.extend(view)
+    updatedScene = PointCloud()
+    updatedScene.points = [Point(p[0], p[1], p[2]) for p in scene]
+
+    return updatedScene, T
 
 def best_fit_transform(A, B):
     '''
@@ -89,7 +156,7 @@ def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
     prev_error = 0
 
     for i in range(max_iterations):
-        # find the nearest neighbours between the current source and destination points
+        # find the nearest neighbors between the current source and destination points
         distances, indices = nearest_neighbor(src[0:3,:].T, dst[0:3,:].T)
 
         # compute the transformation between the current source and nearest destination points
@@ -108,3 +175,36 @@ def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
     T,_,_ = best_fit_transform(A, src[0:3,:].T)
 
     return T, distances
+
+if __name__ == "__main__":
+    from sensor_msgs.msg import PointCloud
+    from geometry_msgs.msg import Point
+
+    def addTups(a, b):
+        return tuple([a[i]+b[i] for i in range(len(a))])
+
+    view1 = PointCloud()
+    view1.points = [ Point(p[0], p[1], 0) for p in [
+        (0, 0),
+        (1, 1),
+        (-3, -2),
+    ]]
+
+    deltaPos = (-0.01, -0.02)
+
+    view2 = PointCloud()
+    view2.points = [ Point(p[0], p[1], 0) for p in [
+        addTups((0, 0), deltaPos),
+        addTups((1, 1), deltaPos),
+        addTups((4, 3), deltaPos),
+    ]]
+
+    scene, T =  augmentScene(view1);
+
+    # Note the difference here between view2, which has points out of
+    # alignment with the scene eg. (3.99, 2.98) instead of (4, 3) and
+    # the final scene, in which the point is perfectly aligned as (4, 3)
+    print view2
+    scene, T =  augmentScene(view2, scene);
+    print scene
+    # print T
