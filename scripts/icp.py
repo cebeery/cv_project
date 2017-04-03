@@ -11,7 +11,7 @@ from sklearn.neighbors import NearestNeighbors
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point
 
-def augmentScene(view, scene=None, newPtThresh=0.04):
+def augmentScene(view, scene=None, newPtThresh=0.08):
     """
     Augments a scene with an approximately correct view (in the same
     coordinate frame), aligning it precisely, and adding it to the
@@ -31,6 +31,8 @@ def augmentScene(view, scene=None, newPtThresh=0.04):
     if scene is None:
         return view, np.identity(4)
 
+    timestamp = view.header.stamp
+
     # Unpack ROS PointCloud into standard lists of tuples
     scene = [(p.x, p.y, p.z) for p in scene.points]
     view = [(p.x, p.y, p.z) for p in view.points]
@@ -45,6 +47,7 @@ def augmentScene(view, scene=None, newPtThresh=0.04):
     # sufficiently distant from existing scene points. Record the
     # remaining matched scene and view points for application of ICP
     distances, sceneIndex = sceneTree.kneighbors(view)
+
     # print "scene index: ", sceneIndex
     # print distances
     sceneICPPoints, newICPPoints = ([], [])
@@ -52,7 +55,7 @@ def augmentScene(view, scene=None, newPtThresh=0.04):
         if d[0] >= newPtThresh:
             continue
 
-        sceneICPPoints.append(scene[sceneIndex[i]])
+        sceneICPPoints.append(scene[sceneIndex[i][0]])
         newICPPoints.append(view[i])
 
     # Apply ICP, if there are some matching points with which to align
@@ -65,11 +68,15 @@ def augmentScene(view, scene=None, newPtThresh=0.04):
 
         distances, _ = sceneTree.kneighbors(transformedView)
         view = [transformedView[i] for i, d in enumerate(distances) if d >= newPtThresh]
+    else:
+        T = np.identity(4)
 
     # Merge transformed view with scene, discarding sufficiently close points
     scene.extend(view)
     updatedScene = PointCloud()
     updatedScene.points = [Point(p[0], p[1], p[2]) for p in scene]
+    updatedScene.header.stamp = timestamp
+    updatedScene.header.frame_id = "odom"
 
     return updatedScene, T
 

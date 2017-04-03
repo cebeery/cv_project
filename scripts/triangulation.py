@@ -50,9 +50,10 @@ def create_pointcloud(pts):
     depths.header.frame_id = "view_zero"
     depths.points = [None] * len(pts)
     for p in xrange(len(pts)):
-        x = pts[p,0]
-        y = pts[p,1]
-        z = pts[p,2]
+        #Giving point the same orientation as the robot
+        y = pts[p,0]
+        z = pts[p,1]
+        x = pts[p,2]
         depths.points[p] = Point(x, y, z)
     return depths
 
@@ -62,15 +63,16 @@ if __name__ == '__main__':
 
     #Camera matrices that came with the images
     #Used to make point arrays later
-    p1 = np.array([[494.6373026601465, 0.0, 272.9442329406738, 0.0],
-          [0.0, 494.6373026601465, 248.702205657959, 0.0],
-          [0.0, 0.0, 1.0, 0.0]])
+    p1 = np.array([[651.2604929444119, 0, 347.6628112792969, 0],
+            [ 0, 651.2604929444119, 243.5513744354248, 0],
+            [0, 0, 1, 0]])
 
-    p2 = np.array([[494.6373026601465, 0.0, 272.9442329406738, -50.45653648390667],
-          [0.0, 494.6373026601465, 248.702205657959, 0.0],
-          [0.0, 0.0, 1.0, 0.0]])
+    p2 = np.array([[651.2604929444119, 0, 347.6628112792969, -65.47091473431786],
+            [0, 651.2604929444119, 243.5513744354248, 0],
+            [0, 0, 1, 0]])
 
     #Matching keypoints found manually in two different images
-    points1 = [(376, 91), (361, 88), (485, 101), (459, 194), (380, 173)]
-    points2 = [(212, 141), (197, 140), (313, 148), (297, 237), (221, 219)]
+    points1 = [(120, 283), (81, 178), (446, 254), (443, 180), (425, 101), (417, 23), (399, 18), (415, 101)]
+    points2 = [(45, 287), (8, 179), (389, 254), (387, 179), (367, 100), (359, 21), (337, 16), (358, 102)]
+
     print(triangulate(points1, points2, p1, p2))

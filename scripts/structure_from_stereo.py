@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import rospy, math, yaml, cv2, os
+import rospy, math, yaml, cv2, os, time
 import numpy as np
 from tf import TransformListener
 from cv_bridge import CvBridge
@@ -8,6 +8,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import  PointCloud, Image
 from find_keypoints import findKeypoints, loadImagePair
 from icp import augmentScene
+from triangulation import triangulate
 
 
 class StructureFromStereoView(object):
@@ -15,7 +16,7 @@ class StructureFromStereoView(object):
     def __init__(self):
         #initialize attributes
         self.readYAML() 	#create camera attributes
-        self.scene = None	#point cloud of scene
+        self.scene = None       #point cloud of scene
         self.dThres = 0.1       #linear movement before performing an update
         self.aThres = math.pi/8 #angular movement before performing an update
         self.lastPose = None    #last view location of robot in odom
@@ -26,17 +27,23 @@ class StructureFromStereoView(object):
         # Initialize ROS message to OpenCV converter
         self.bridge = CvBridge() 
 
-        # enable listening for coordinate transforms
-        self.tf_listener = TransformListener() 
-
         #create ros node
         rospy.init_node('sfsv')
         self.rate = rospy.Rate(10)
-        self.pub = rospy.Publisher("scene", PointCloud, queue_size=10)
-        rospy.Subscriber("camera_left/camera/image_rect_color", Image, self.processRCam)
+        self.pub = rospy.Publisher("/scene", PointCloud, queue_size=10)
+        rospy.Subscriber("camera_right/camera/image_rect_color", Image, self.processRCam)
         rospy.Subscriber("camera_left/camera/image_rect_color", Image, self.processLCam)  
         rospy.Subscriber("odom", Odometry, self.processOdom)
-    
+
+        # enable listening for coordinate transforms
+        self.tf_listener = TransformListener(True, rospy.Duration(10)) 
+        print "Waiting for tf to see odom"
+        while not "odom" in self.tf_listener.getFrameStrings():
+            print self.tf_listener.getFrameStrings()      
+            time.sleep(0.01)
+            continue  
+        print "Odom seen"
+
     def readYAML(self):
         """
         Set camera calibration and projection matrixes class attributes 
@@ -70,14 +77,18 @@ class StructureFromStereoView(object):
 
     def processLCam(self, msg):
         """left camera image callback that stores image"""
-        self.imgL = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        self.imgL = self.bridge.imgmsg_to_cv2(msg, desired_encoding="mono8")
 
     def processRCam(self, msg):
         """Right camera image callback that stores image"""
-        self.imgR = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        self.imgR = self.bridge.imgmsg_to_cv2(msg, desired_encoding="mono8")
 
     def determineMotion(self):
         """Determines if robot has moved enough to warrent creating another camera view"""
+        
+        if self.imgL is None or self.imgR is None:
+            print "no pics"
+            return False 
 
         #initialize scene
         if self.lastPose == None and self.currPose != None:
@@ -114,7 +125,7 @@ class StructureFromStereoView(object):
         """
 
         #generate matches and keypoints 
-        viewData = findKeypoints(imgPair, visualize=True)
+        viewData = findKeypoints(imgPair, visualize)
 
         #extract data
         leftKps = viewData["leftKps"]
@@ -141,7 +152,7 @@ class StructureFromStereoView(object):
         #TODO
         pass
 
-    def createViewPtCloud(self):
+    def createViewPtCloud(self, LMPs, RMPs):
         """
         Create point cloud of current view from matched points
         Inputs:
@@ -149,24 +160,15 @@ class StructureFromStereoView(object):
                	RMPs (ordered 1D array of right image matched points)
         Output: view (point cloud of current stereo view)
         """
-        #TODO 
-	#change to triangulate call
-        
-        #view = triangulate(LMPs, RMPs, self.LProjMat, self.RProjMat)
+        #find distances       
+        view = triangulate(LMPs, RMPs, self.LProjMat, self.RProjMat)
 
-        #***placeholder code***
-        view = PointCloud()
-        view.frame_id="view_zero"
-        view.points = [ Point(p[0], p[1], 0) for p in [
-                      (0, 0),
-                      (1, 1),
-                      (-3, -2),
-                      ]]
-
+        #wait for transform or fail if doesn't appear within 4 seconds
+        self.tf_listener.waitForTransform("odom", "view_zero", rospy.Time.now(), rospy.Duration(4.0))
         #transform current view point cloud from view_zero frame to odom frame
-        view_odom = self.tf_listener.PointCloud("odom", view) 
+        view_odom = self.tf_listener.transformPointCloud("odom", view) 
 
-        return view_odom
+        return view
 
     def integrateView(self, view):
         """
@@ -174,10 +176,8 @@ class StructureFromStereoView(object):
         Input:	view (point cloud of current view)
         """        
         #perform ICP to add current view point cloud to cummulative scene 
-        if self.scene == None:
-            self.scene = view #set initial scene point cloud if first view
-        else:
-            self.scene,_ = augmentScene(view, self.scene)
+        self.scene,_ = augmentScene(view, self.scene)
+        print len(self.scene.points)
 
     def refineScene(self):
         """Perform bundle adjustment refinement on scene"""
@@ -192,40 +192,42 @@ class StructureFromStereoView(object):
         """
         #create matched point lists
         imgPair = loadImagePair(file_name,file_path)
-        LMPs,RMPs = self.extractKeypoints(imgPair, visualize=True)
+        LMPs,RMPs = self.extractKeypoints(imgPair, visualize=False)
 
         #create point cloud from key points
-        view = self.createViewPtCloud(self, LMPs, RMPs)
+        view = self.createViewPtCloud(LMPs, RMPs)
 
         #publish point cloud
-        while not rospy.is_shutdown:
+        while not rospy.is_shutdown():
             self.pub.publish(view)
-            rospy.sleep(self.rate)
+            self.rate.sleep()
+          
 
     def live(self):
         """Main live camera loop that adds views to pt cloud scene when neato moves"""
-        while not rospy.is_shutdown:
+        while not rospy.is_shutdown():
             #determine if creating new view
             flag = self.determineMotion()
             if flag:
                 #create lists of matched points from images
-                LMPs,RMPs  = self.extractKeypoints([self.imgL,self.imgR])
+                LMPs,RMPs  = self.extractKeypoints([self.imgL,self.imgR], visualize=False)
 
                 #create point cloud from key points
-                view = self.createViewPtCloud(self, LMPs, RMPs)
+                view = self.createViewPtCloud(LMPs, RMPs)
 
                 #integrate into memory of point cloud scene
                 self.integrateView(view)
-        
-            #publish point cloud
-            self.pub.publish(self.scene)
-            rospy.sleep(self.rate)
+ 
+                #publish point cloud
+                self.pub.publish(self.scene)
+            self.rate.sleep()
 
 if __name__ == "__main__":
    sfsv = StructureFromStereoView()
-
+   
+   sfsv.live()
    #create point cloud from filed images
-   dir_path = os.path.dirname(os.path.realpath(__file__))
-   file_name = "backpack"
-   file_path = os.path.join(dir_path, "../images/")
-   sfsv.static(file_name, file_path)
+   #dir_path = os.path.dirname(os.path.realpath(__file__))
+   #file_name = "backpack"
+   #file_path = os.path.join(dir_path, "../images/")
+   #sfsv.static(file_name, file_path)
