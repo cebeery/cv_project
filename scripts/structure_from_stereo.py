@@ -225,6 +225,7 @@ if __name__ == "__main__":
    sfsv = StructureFromStereoView()
 
    #create point cloud from filed images
+   dir_path = os.path.dirname(os.path.realpath(__file__))
    file_name = "backpack"
-   file_path = "../images/"
+   file_path = os.path.join(dir_path, "../images/")
    sfsv.static(file_name, file_path)
