@@ -46,6 +46,7 @@ def create_pointcloud(pts):
     return depths
 
 if __name__ == '__main__':
+    #An example of triangulation.
     rospy.init_node('triangulator')
     p1 = np.array([[494.6373026601465, 0.0, 272.9442329406738, -50.45653648390667],
           [0.0, 494.6373026601465, 248.702205657959, 0.0],
