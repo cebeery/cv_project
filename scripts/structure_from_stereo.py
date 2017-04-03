@@ -152,7 +152,7 @@ class StructureFromStereoView(object):
         #TODO 
 	#change to triangulate call
         
-        #view = triangulate(LMPs, RMPs, self.LK, self.RK, self.LProjMat, self.RProjMat)
+        #view = triangulate(LMPs, RMPs, self.LProjMat, self.RProjMat)
 
         #***placeholder code***
         view = PointCloud()

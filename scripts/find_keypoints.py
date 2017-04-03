@@ -3,8 +3,7 @@ import cv2
 import os
 import draw_matches as dm
 
-def findKeypoints(imgName, path="../images/", visualize=False, savePath=None):
-	imgPair = loadImagePair(imgName, path)
+def findKeypoints(imgPair, visualize=False, savePath=None):
 
 	if visualize:
 		showImgPair(imgPair, savePath=savePath)
@@ -125,6 +124,7 @@ if __name__ == "__main__":
         dir_path = os.path.dirname(os.path.realpath(__file__))
 	TEST_FILEPATH = os.path.join(dir_path, "../images/")
 	TEST_FILE = "backpack"
+        imgPair = loadImagePair(TEST_FILE, TEST_FILEPATH)
 
-	kpMatchData = findKeypoints(TEST_FILE, TEST_FILEPATH, visualize=True, savePath=('../docs/'+TEST_FILE+'_'))
+	kpMatchData = findKeypoints(imgPair, visualize=True, savePath=('../docs/'+TEST_FILE+'_'))
 	print kpMatchData.keys()
