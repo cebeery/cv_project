@@ -70,7 +70,7 @@ if __name__ == '__main__':
           [0.0, 494.6373026601465, 248.702205657959, 0.0],
           [0.0, 0.0, 1.0, 0.0]])
 
-    #Matchign keypoints found manually in two different images
+    #Matching keypoints found manually in two different images
     points1 = [(376, 91), (361, 88), (485, 101), (459, 194), (380, 173)]
     points2 = [(212, 141), (197, 140), (313, 148), (297, 237), (221, 219)]
     print(triangulate(points1, points2, p1, p2))
