@@ -122,8 +122,9 @@ def showMatchPair(imgPair, keypointPair, matches, pause=True, savePath=None):
 		cv2.imwrite(os.path.join(savePath, 'matches.png'), matchImg)
 
 if __name__ == "__main__":
-	TEST_FILEPATH = "../images/"
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+	TEST_FILEPATH = os.path.join(dir_path, "../images/")
 	TEST_FILE = "backpack"
 
-	kpMatchData = findKeypoints(TEST_FILE, visualize=True, savePath=('../docs/'+TEST_FILE+'_'))
+	kpMatchData = findKeypoints(TEST_FILE, TEST_FILEPATH, visualize=True, savePath=('../docs/'+TEST_FILE+'_'))
 	print kpMatchData.keys()
