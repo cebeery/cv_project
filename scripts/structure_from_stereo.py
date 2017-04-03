@@ -176,7 +176,13 @@ class StructureFromStereoView(object):
         Input:	view (point cloud of current view)
         """        
         #perform ICP to add current view point cloud to cummulative scene 
-        self.scene,_ = augmentScene(view, self.scene)
+        #self.scene,_ = augmentScene(view, self.scene)
+ 
+        #brute force
+        if self.scene: 
+            self.scene.points.extend(view.points)
+        else:
+            self.scene = view
         print len(self.scene.points)
 
     def refineScene(self):
