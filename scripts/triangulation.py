@@ -52,7 +52,7 @@ def create_pointcloud(pts):
     for p in xrange(len(pts)):
         #Giving point the same orientation as the robot
         y = pts[p,0]
-        z = pts[p,1]
+        z = - pts[p,1] #y in images is down
         x = pts[p,2]
         depths.points[p] = Point(x, y, z)
     return depths
