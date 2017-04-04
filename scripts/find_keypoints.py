@@ -13,7 +13,7 @@ def findKeypoints(imgPair, visualize=False, savePath=None):
 	if visualize:
 		showKeypointPair(imgPair, kpPair, savePath=savePath)
 
-	matches = matchKeypointsByQuota(kpPair)
+	matches = matchKeypointsByRatio(kpPair)
 
 	if visualize:
 		showMatchPair(imgPair, kpPair, matches, savePath=savePath)

@@ -48,8 +48,6 @@ def augmentScene(view, scene=None, newPtThresh=0.08):
     # remaining matched scene and view points for application of ICP
     distances, sceneIndex = sceneTree.kneighbors(view)
 
-    # print "scene index: ", sceneIndex
-    # print distances
     sceneICPPoints, newICPPoints = ([], [])
     for i, d in enumerate(distances):
         if d[0] >= newPtThresh:
@@ -60,22 +58,24 @@ def augmentScene(view, scene=None, newPtThresh=0.08):
 
     # Apply ICP, if there are some matching points with which to align
     # the view and scene
-    if len(newICPPoints) > 0:
+    if len(newICPPoints) > 5:
         T, _ = icp(np.array(newICPPoints), np.array(sceneICPPoints))
         viewMat = np.ones((4, np.array(view).shape[0]))
         viewMat[0:3,:] = np.copy(np.array(view).T)
         transformedView = np.dot(T, viewMat)[0:3,:].T
-
+        
         distances, _ = sceneTree.kneighbors(transformedView)
         view = [transformedView[i] for i, d in enumerate(distances) if d >= newPtThresh]
     else:
         T = np.identity(4)
-
+        print "brute"
+ 
+    print scene[0]
     # Merge transformed view with scene, discarding sufficiently close points
     scene.extend(view)
     updatedScene = PointCloud()
     updatedScene.points = [Point(p[0], p[1], p[2]) for p in scene]
-    updatedScene.header.stamp = timestamp
+    #updatedScene.header.stamp = timestamp
     updatedScene.header.frame_id = "odom"
 
     return updatedScene, T
