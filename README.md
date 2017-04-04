@@ -41,21 +41,26 @@ The result of our key-point matching, applied to the backpack, can be seen below
 
 ![Matches between Key-Points on Backpack Images](docs/backpack_stereo_matches.png)
 
-### Verifying the Projection Matrix 
+### Verifying the Projection Matrix
 
 ### Triangulation
 
 To identify depth in an image, we needed to use our stereo vision to triangulate points from the camera. Since all points in an image are essentially rays pointing out from the camera, we needed to find where the two rays intersected. Luckily, OpenCV has a `triangulatePoints` function to do this. With this, we can transform our lists of matching keypoints into a depth cloud.
 
-In our code, the OpenCV triangulation function is encapsulated in its own file. The triangulation function requires numpy arrays full of floats, and returns an array of homologous coordinates. The encapsulation was designed to allow us to convert the input to the correct format, and restructure the homologous coordinates in to an 3D Ros `PointCloud`, without complicating the main loop. 
+In our code, the OpenCV triangulation function is encapsulated in its own file. The triangulation function requires numpy arrays full of floats, and returns an array of homologous coordinates. The encapsulation was designed to allow us to convert the input to the correct format, and restructure the homologous coordinates in to an 3D Ros `PointCloud`, without complicating the main loop.
 
 ### Combining Multiple Views
+When augmenting our current point cloud (aka the *scene*) with views from the moving robot a couple issues arise. First, because of the drift in odometry, the robot may mis-project where points are in a fixed reference frame, because it calculates the position of points relative to its own odometry-estimated position. Second, if we continue to add all new points to the cloud, it quickly becomes dense and unwieldy - ideally once a keypoint has been projected into the scene once, we don't need to do it again.
+
+To deal with these issues, we use the Iterative Closest Point Algorithm (ICP) which is used to align, rotate, and scale two point-clouds in which points are duplicated between the scene and view, with some errors or misalignment.
+
+To make use of ICP, we need to first match the scene and view point-clouds. We check the view points for their nearest neighbor in the scene and, if the view and scene points are below a particular distance threshold, estimate that they are likely matched points. We then use these matches to find a transform between the view and scene with ICP and apply that transform to the entire view (not just the matched points). We then run another nearest neighbor search and discard any new view points that are below a distance threshold from the scene points.
+
+This pipeline corrects small alignment errors in the view, compensating for odometry drift or small calibration errors. It also keeps our point-cloud from becoming overly dense when continuously scanning the same object with the camera. As a side effect, the transform from ICP could be extended to help us estimate the camera's actual position, correct our odometry, and compensate for drift (a technique known as *visual odometry*. However, we did not get to this point of the project.
+
 
 ### Resultant Point-Clouds
 The following show the resulting live camera matches found from the stereo camera setup as well as the point cloud they generate.
 ![Matched live camera points](images/documentation/matches.png)
 
 ![Point Cloud](images/documentation/point cloud.png
-
-
-## Future Work

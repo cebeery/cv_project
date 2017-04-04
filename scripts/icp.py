@@ -63,13 +63,13 @@ def augmentScene(view, scene=None, newPtThresh=0.08):
         viewMat = np.ones((4, np.array(view).shape[0]))
         viewMat[0:3,:] = np.copy(np.array(view).T)
         transformedView = np.dot(T, viewMat)[0:3,:].T
-        
+
         distances, _ = sceneTree.kneighbors(transformedView)
         view = [transformedView[i] for i, d in enumerate(distances) if d >= newPtThresh]
     else:
         T = np.identity(4)
         print "brute"
- 
+
     print scene[0]
     # Merge transformed view with scene, discarding sufficiently close points
     scene.extend(view)
