@@ -60,7 +60,7 @@ Once fed into the triangulation code, it said that the closer edge of the boxes 
 The following show the resulting live camera matches found from the stereo camera setup as well as the point cloud they generate.
 ![Matched live camera points](images/documentation/matches.png)
 
-![Point Cloud](images/documentation/point cloud.png)
+![Point Cloud](images/documentation/pointcloud.png)
 
 
 ## Future Work
