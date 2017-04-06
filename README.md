@@ -1,7 +1,7 @@
 # 3D Computer Vision from Stereo Cameras
 
 ## Motivation
-As a two-week project for Olin's Spring 2017 offering of Computational Robotics, our team of three implemented a well-documented code pipeline for making sense of 2D images from two stereoscopic cameras as a 3D point cloud.
+As a two-week project for Olin's Spring 2017 offering of Computational Robotics, our team of three implemented a well-documented code pipeline for making sense of 2D images from two stereoscopic cameras as a 3D point cloud. From this project, we’d like to learn to understand the ecosystem of algorithms used to create 3D interpreations from 2D images. There is particular interest in learning how to combine point clouds (e.g. using the iterative closest point algorithm). For an MVP, we will use all existing algorithm implementations to generate a point cloud from stereo camera images. 
 
 In our implementation, we relied primarily upon chapter four of the book *Mastering OpenCV with Practical Computer Vision Projects*.
 
