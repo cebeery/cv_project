@@ -41,8 +41,6 @@ The result of our key-point matching, applied to the backpack, can be seen below
 
 ![Matches between Key-Points on Backpack Images](docs/backpack_stereo_matches.png)
 
-### Verifying the Projection Matrix
-
 ### Triangulation
 
 To identify depth in an image, we needed to use our stereo vision to triangulate points from the camera. Since all points in an image are essentially rays pointing out from the camera, we needed to find where the two rays intersected. Luckily, OpenCV has a `triangulatePoints` function to do this. With this, we can transform our lists of matching keypoints into a depth cloud.
@@ -69,4 +67,4 @@ This pipeline corrects small alignment errors in the view, compensating for odom
 The following show the resulting live camera matches found from the stereo camera setup as well as the point cloud they generate.
 ![Matched live camera points](images/documentation/matches.png)
 
-![Point Cloud](images/documentation/point cloud.png
+![Point Cloud](images/documentation/point cloud.png)
