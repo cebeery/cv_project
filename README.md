@@ -5,6 +5,9 @@ As a two-week project for Olin's Spring 2017 offering of Computational Robotics,
 
 In our implementation, we relied primarily upon chapter four of the book *Mastering OpenCV with Practical Computer Vision Projects*.
 
+## Goals
+For this project, our team aimed to learn about the ecosystem of algorithms used to work with visual odometry and mesh generation. We were particularly interested in learning about triangulation with the essential and fundamental matricies and how to combine point clouds using the iterative closest point algorithm.
+
 ## Setup
 ### Software
 This project was developed within the ROS framework, though individual parts - such as the key-point matching - are standalone libraries based on the OpenCV library. Edits were additionally made to a copy of the base comprobo Neato bringup.lauch and camera_parameters.yaml files to allow for multiple cameras and a new tf transform between cameras' view_zero and the Neato's base_link.
